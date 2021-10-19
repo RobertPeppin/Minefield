@@ -3,6 +3,10 @@ using System.Collections.Generic;
 
 namespace Minefield
 {
+    /// <summary>
+    /// Implementation of IPlayer
+    /// Manages the life span of a player and the moves they make
+    /// </summary>
     public class Player : IPlayer
     {
         private readonly IGameBoard gameboard;
@@ -20,10 +24,13 @@ namespace Minefield
             CurrentBoardLocation = this.gameboard.GetStartLocation();
         }
 
+        /// <inheritdoc/>
         public List<BoardLocation> HistoricPositions { get; } = new List<BoardLocation>();
 
+        /// <inheritdoc/>
         public int NumberOfLives { get; private set; }
 
+        /// <inheritdoc/>
         public BoardLocation CurrentBoardLocation
         {
             get => boardLocation;
@@ -34,6 +41,7 @@ namespace Minefield
             }
         }
 
+        /// <inheritdoc/>
         public bool CanPlay => NumberOfLives > 0 && !winner;
 
         private void Gameboard_OtherSideReached(object sender, EventArgs e)
