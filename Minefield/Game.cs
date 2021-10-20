@@ -25,46 +25,14 @@ namespace Minefield
 
             while (playing)
             {
-                Console.Clear();
-                Console.WriteLine("Creating board ...");
-                currentBoard.HeightOfBoard = height;
-                currentBoard.WidthOfBoard = width;
-                currentBoard.NumberOfMines = mines;
-
-                currentBoard.CreateBoard();
-                Console.WriteLine("Mines shuffled and board built.");
-                currentPlayer.GetStartPosition();
+                SetupGame(width, height, mines, currentBoard, currentPlayer);
 
                 Console.WriteLine("Your move, Punk!");
 
                 while (currentPlayer.CanPlay)
                 {
                     // Get an input
-                    Console.WriteLine($"You are in square {currentPlayer.CurrentBoardLocation} and you have {currentPlayer.NumberOfLives} lives left");
-                    Console.WriteLine("Where next? U,D,L or R");
-
-                    ConsoleKeyInfo direction = Console.ReadKey(true);
-                    Console.Clear();
-
-                    char keyPressed = (char)direction.Key;
-                    Direction moveDirection = Direction.None;
-                    switch (keyPressed)
-                    {
-                        case 'U':
-                            moveDirection = Direction.Up;
-                            break;
-                        case 'D':
-                            moveDirection = Direction.Down;
-                            break;
-                        case 'L':
-                            moveDirection = Direction.Left;
-                            break;
-                        case 'R':
-                            moveDirection = Direction.Right;
-                            break;
-                        default:
-                            break;
-                    }
+                    Direction moveDirection = AskPlayerToMove(currentPlayer);
 
                     if (moveDirection == Direction.None)
                     {
@@ -76,20 +44,71 @@ namespace Minefield
                     }
                 }
 
-                Console.WriteLine("Would you like to play again? Y/N");
-                ConsoleKeyInfo playAgain = Console.ReadKey(true);
-
-                if (playAgain.Key == ConsoleKey.N)
-                {
-                    playing = false;
-                }
-                else
-                {
-                    currentPlayer.Reset();
-                }
+                playing = WouldYouLikeToPlayAgain(playing, currentPlayer);
             }
 
             Console.WriteLine("Game over...");
+        }
+
+        private bool WouldYouLikeToPlayAgain(bool playing, IPlayer currentPlayer)
+        {
+            Console.WriteLine("Would you like to play again? Y/N");
+            ConsoleKeyInfo playAgain = Console.ReadKey(true);
+
+            if (playAgain.Key == ConsoleKey.N)
+            {
+                playing = false;
+            }
+            else
+            {
+                currentPlayer.Reset();
+            }
+
+            return playing;
+        }
+
+        private Direction AskPlayerToMove(IPlayer currentPlayer)
+        {
+            Console.WriteLine($"You are in square {currentPlayer.CurrentBoardLocation} and you have {currentPlayer.NumberOfLives} lives left");
+            Console.WriteLine("Where next? U,D,L or R");
+
+            ConsoleKeyInfo direction = Console.ReadKey(true);
+            Console.Clear();
+
+            char keyPressed = (char)direction.Key;
+            Direction moveDirection = Direction.None;
+            switch (keyPressed)
+            {
+                case 'U':
+                    moveDirection = Direction.Up;
+                    break;
+                case 'D':
+                    moveDirection = Direction.Down;
+                    break;
+                case 'L':
+                    moveDirection = Direction.Left;
+                    break;
+                case 'R':
+                    moveDirection = Direction.Right;
+                    break;
+                default:
+                    break;
+            }
+
+            return moveDirection;
+        }
+
+        private void SetupGame(int width, int height, int mines, IGameBoard currentBoard, IPlayer currentPlayer)
+        {
+            Console.Clear();
+            Console.WriteLine("Creating board ...");
+            currentBoard.HeightOfBoard = height;
+            currentBoard.WidthOfBoard = width;
+            currentBoard.NumberOfMines = mines;
+
+            currentBoard.CreateBoard();
+            Console.WriteLine("Mines shuffled and board built.");
+            currentPlayer.GetStartPosition();
         }
     }
 }
