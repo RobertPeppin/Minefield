@@ -1,17 +1,46 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
+using DryIoc;
+using Moq;
 using NUnit.Framework;
 
 namespace Minefield.UnitTests
 {
+    /// <summary>
+    /// These game board test use a Moq of the IBoardBuilder
+    /// </summary>
     public class GameBoardTests
     {
-        private BoardBuilderStub builder;
-
         [SetUp]
         public void Setup()
         {
-            builder = new BoardBuilderStub();
+            // Create a Moq builder (instead of using a Stub)
+            var moqBuilder = new Mock<IBoardBuilder>();
+
+            moqBuilder.Setup(u => u.GenerateBoard(8, 8, 0))
+                .Returns(new List<BoardLocation>());
+
+            moqBuilder.Setup(u => u.GenerateBoard(4, 4, 0))
+                .Returns(new List<BoardLocation>());
+
+            moqBuilder.Setup(u => u.GenerateBoard(8, 8, 8))
+                .Returns(
+                new List<BoardLocation>()
+                    {
+                        new BoardLocation (){HorizontalPosition = 'D', VerticalPosition = 1},
+                        new BoardLocation (){HorizontalPosition = 'D', VerticalPosition = 2},
+                        new BoardLocation (){HorizontalPosition = 'D', VerticalPosition = 3},
+                        new BoardLocation (){HorizontalPosition = 'D', VerticalPosition = 4},
+                        new BoardLocation (){HorizontalPosition = 'D', VerticalPosition = 5},
+                        new BoardLocation (){HorizontalPosition = 'D', VerticalPosition = 6},
+                        new BoardLocation (){HorizontalPosition = 'D', VerticalPosition = 7},
+                        new BoardLocation (){HorizontalPosition = 'D', VerticalPosition = 8},
+                    }
+                );
+            var builder = moqBuilder.Object;
+
+            Container.Current.RegisterInstance(builder);
+            Container.Current.Register<IGameBoard, GameBoard>();
         }
 
         [Test]
@@ -20,9 +49,7 @@ namespace Minefield.UnitTests
         public void SetupBoard(int width, int height)
         {
             // no mines
-            builder.LocationsToUse = new List<BoardLocation>();
-
-            GameBoard board = new GameBoard(builder);
+            IGameBoard board = Container.Current.Resolve<IGameBoard>();
 
             board.HeightOfBoard = height;
             board.WidthOfBoard = width;
@@ -31,18 +58,19 @@ namespace Minefield.UnitTests
             board.CreateBoard();
         }
 
+        /// <summary>
+        /// Test the board will allow a user to get to the other side
+        /// </summary>
+        /// <param name="width">Width of board to use</param>
+        /// <param name="height">Height of Board to use</param>
         [Test]
         [TestCase(8, 8)]
-        [TestCase(4, 4)]
         public void MoveAccrossBoard(int width, int height)
         {
             // use to track an event was raised
             ManualResetEvent eventRaised = new ManualResetEvent(false);
 
-            // no mines
-            builder.LocationsToUse = new List<BoardLocation>();
-
-            GameBoard board = new GameBoard(builder);
+            IGameBoard board = Container.Current.Resolve<IGameBoard>();
 
             board.HeightOfBoard = height;
             board.WidthOfBoard = width;
@@ -62,27 +90,16 @@ namespace Minefield.UnitTests
             Assert.IsTrue(eventRaised.WaitOne(100));
         }
 
+        /// <summary>
+        /// When a player attempts to move onto a mine, an event should be raised
+        /// </summary>
         [Test]
         public void MoveAcrossBoardAndHitMine()
         {
             // use to track an event was raised
             ManualResetEvent eventRaised = new ManualResetEvent(false);
 
-            // generate mines down the board in the 4th column
-            var mines = new List<BoardLocation>();
-
-            for (int index = 1; index <= 8; index++)
-            {
-                mines.Add(new BoardLocation()
-                {
-                    HorizontalPosition = 'D',
-                    VerticalPosition = index
-                });
-            }
-
-            builder.LocationsToUse = mines;
-
-            GameBoard board = new GameBoard(builder);
+            IGameBoard board = Container.Current.Resolve<IGameBoard>();
 
             board.HeightOfBoard = 8;
             board.WidthOfBoard = 8;
@@ -109,10 +126,7 @@ namespace Minefield.UnitTests
         [Test]
         public void MoveAroundAndCheckPosition()
         {
-            // no mines
-            builder.LocationsToUse = new List<BoardLocation>();
-
-            GameBoard board = new GameBoard(builder);
+            IGameBoard board = Container.Current.Resolve<IGameBoard>();
 
             board.HeightOfBoard = 8;
             board.WidthOfBoard = 8;
@@ -151,10 +165,7 @@ namespace Minefield.UnitTests
         [Test]
         public void MoveAndAttemptToMoveOffBoard()
         {
-            // no mines
-            builder.LocationsToUse = new List<BoardLocation>();
-
-            GameBoard board = new GameBoard(builder);
+            IGameBoard board = Container.Current.Resolve<IGameBoard>();
 
             board.HeightOfBoard = 8;
             board.WidthOfBoard = 8;
@@ -170,7 +181,8 @@ namespace Minefield.UnitTests
 
             // go right, down, left and up
             location = board.Move(location, Direction.Left);
-            // this should not move
+
+            // this player should not move as they are at the limit of the board
             Assert.AreEqual('A', location.HorizontalPosition);
             Assert.AreEqual(8, location.VerticalPosition);
             Assert.AreEqual("A:8", location.ToString());
@@ -187,7 +199,6 @@ namespace Minefield.UnitTests
                 VerticalPosition = 1
             };
 
-
             location = board.Move(location, Direction.Right);
             Assert.AreEqual('H', location.HorizontalPosition);
             Assert.AreEqual(1, location.VerticalPosition);
@@ -197,6 +208,12 @@ namespace Minefield.UnitTests
             Assert.AreEqual('H', location.HorizontalPosition);
             Assert.AreEqual(1, location.VerticalPosition);
             Assert.AreEqual("H:1", location.ToString());
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            Container.Current.Dispose();
         }
     }
 }

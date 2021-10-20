@@ -1,84 +1,95 @@
 ﻿using System;
-using System.Threading.Tasks;
+using DryIoc;
 
 namespace Minefield
 {
     public class Game
     {
-        public Game()
-        {
-        }
-
-        /// <summary>
-        /// Gets the current board being played
-        /// </summary>
-        public IGameBoard CurrentBoard { get; private set; }
-
-        /// <summary>
-        /// Gets the current player playing
-        /// </summary>
-        public IPlayer CurrentPlayer { get; private set; }
-
         /// <summary>
         /// Starts a game and manages it to completion
         /// </summary>
-        public void StartGame()
+        /// <param name="width">Width of board required - default 8</param>
+        /// <param name="height">Height of board required - default 8</param>
+        /// <param name="mines">Number of mines to use - default 16</param>
+        /// <param name="numberOfLives">Number of lives a user starts with - default 3</param>
+        public void StartGame(int width = 8, int height = 8, int mines = 16, int numberOfLives = 3)
         {
+            bool playing = true;
+
             Console.WriteLine("Starting game");
 
             // Create a board
-            CurrentBoard = new GameBoard(new BoardBuilder());
+            var currentBoard = Container.Current.Resolve<IGameBoard>();
+            var currentPlayer = Container.Current.Resolve<IPlayer>();
+            currentPlayer.SetMaxLives(numberOfLives);
 
-            Console.WriteLine("Creating board");
-            CurrentBoard.HeightOfBoard = 8;
-            CurrentBoard.WidthOfBoard = 8;
-            CurrentBoard.NumberOfMines = 16;
-
-            CurrentBoard.CreateBoard();
-            Console.WriteLine("Mines shuffled and board built");
-
-            // Create a player
-            CurrentPlayer = new Player(CurrentBoard, numberOfLives: 3);
-
-            Console.WriteLine("Your move, Punk!");
-
-            while (CurrentPlayer.CanPlay)
+            while (playing)
             {
-                // Get an input
-                Console.WriteLine($"You are in square {CurrentPlayer.CurrentBoardLocation} and you have {CurrentPlayer.NumberOfLives} lives left");
-                Console.WriteLine("Where next? U,D,L or R");
-                var direction = Console.ReadKey(true);
+                Console.Clear();
+                Console.WriteLine("Creating board ...");
+                currentBoard.HeightOfBoard = height;
+                currentBoard.WidthOfBoard = width;
+                currentBoard.NumberOfMines = mines;
 
-                var keyPressed = (char)direction.Key;
-                var moveDirection = Direction.None;
-                switch (keyPressed)
+                currentBoard.CreateBoard();
+                Console.WriteLine("Mines shuffled and board built.");
+                currentPlayer.GetStartPosition();
+
+                Console.WriteLine("Your move, Punk!");
+
+                while (currentPlayer.CanPlay)
                 {
-                    case 'U':
-                        moveDirection = Direction.Up;
-                        break;
-                    case 'D':
-                        moveDirection = Direction.Down;
-                        break;
-                    case 'L':
-                        moveDirection = Direction.Left;
-                        break;
-                    case 'R':
-                        moveDirection = Direction.Right;
-                        break;
+                    // Get an input
+                    Console.WriteLine($"You are in square {currentPlayer.CurrentBoardLocation} and you have {currentPlayer.NumberOfLives} lives left");
+                    Console.WriteLine("Where next? U,D,L or R");
+
+                    ConsoleKeyInfo direction = Console.ReadKey(true);
+                    Console.Clear();
+
+                    char keyPressed = (char)direction.Key;
+                    Direction moveDirection = Direction.None;
+                    switch (keyPressed)
+                    {
+                        case 'U':
+                            moveDirection = Direction.Up;
+                            break;
+                        case 'D':
+                            moveDirection = Direction.Down;
+                            break;
+                        case 'L':
+                            moveDirection = Direction.Left;
+                            break;
+                        case 'R':
+                            moveDirection = Direction.Right;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    if (moveDirection == Direction.None)
+                    {
+                        Console.WriteLine("Invalid move!");
+                    }
+                    else
+                    {
+                        currentPlayer.CurrentBoardLocation = currentBoard.Move(currentPlayer.CurrentBoardLocation, moveDirection);
+                    }
                 }
 
-                if (moveDirection == Direction.None)
+                Console.WriteLine("Would you like to play again? Y/N");
+                ConsoleKeyInfo playAgain = Console.ReadKey(true);
+
+                if (playAgain.Key == ConsoleKey.N)
                 {
-                    Console.WriteLine("Invalid move!");
+                    playing = false;
                 }
                 else
                 {
-                    CurrentPlayer.CurrentBoardLocation = CurrentBoard.Move(CurrentPlayer.CurrentBoardLocation, moveDirection);
+                    currentPlayer.Reset();
                 }
             }
 
             Console.WriteLine("Game over...");
-
         }
     }
 }

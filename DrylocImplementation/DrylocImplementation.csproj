@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="DryIoc" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="DryIoc" Version="4.8.2" />
+  </ItemGroup>
+</Project>

@@ -1,11 +1,12 @@
 ﻿using System;
+
 namespace Minefield.UnitTests
 {
     public class GameBoardStub : IGameBoard
     {
-        public int WidthOfBoard { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public int HeightOfBoard { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public int NumberOfMines { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public int WidthOfBoard { get; set; }
+        public int HeightOfBoard { get; set; }
+        public int NumberOfMines { get; set; }
 
         public event EventHandler<BoardLocation> Boom;
         public event EventHandler OtherSideReached;
@@ -28,6 +29,11 @@ namespace Minefield.UnitTests
         public void SetOffMine()
         {
             Boom?.Invoke(this, new BoardLocation() { HorizontalPosition = 'B', VerticalPosition = 1 });
+        }
+
+        public void ReachTheOtherSide()
+        {
+            OtherSideReached?.Invoke(this, new());
         }
     }
 }

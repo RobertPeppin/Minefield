@@ -11,8 +11,8 @@ namespace Minefield
     {
         private readonly IBoardBuilder builder;
         private List<BoardLocation> mines;
-        private Random randomGenerator;
-        private char baseLocation = 'A';
+        private readonly Random randomGenerator;
+        private readonly char baseLocation = 'A';
 
         /// <summary>
         /// Create a new instance of the game board
@@ -42,6 +42,7 @@ namespace Minefield
         /// <inheritdoc/>
         public void CreateBoard()
         {
+            // create a new set of mines for this board
             mines = builder.GenerateBoard(WidthOfBoard, HeightOfBoard, NumberOfMines);
         }
 
@@ -53,8 +54,9 @@ namespace Minefield
             while (startLocation == null)
             {
                 /// generate a random start location - we always start on the left (A)
-                var verticalStart = randomGenerator.Next(1, HeightOfBoard);
+                int verticalStart = randomGenerator.Next(1, HeightOfBoard);
 
+                // and make sure it isnt a mine
                 if (!mines.Any(m => m.VerticalPosition == verticalStart && m.HorizontalPosition == 'A'))
                 {
                     startLocation = new BoardLocation()
@@ -73,7 +75,7 @@ namespace Minefield
         {
             if (ValidateMove(currentPosition, moveDirection))
             {
-                var nextPosition = GetNextPosition(currentPosition, moveDirection);
+                BoardLocation nextPosition = GetNextPosition(currentPosition, moveDirection);
 
                 // check the mines
                 if (mines.Any(m => m.VerticalPosition == nextPosition.VerticalPosition && m.HorizontalPosition == nextPosition.HorizontalPosition))
@@ -99,43 +101,36 @@ namespace Minefield
 
         private BoardLocation GetNextPosition(BoardLocation currentPosition, Direction moveDirection)
         {
-            switch (moveDirection)
+            return moveDirection switch
             {
-                case Direction.Down:
-                    return new BoardLocation()
-                    {
-                        VerticalPosition = currentPosition.VerticalPosition - 1,
-                        HorizontalPosition = currentPosition.HorizontalPosition
-                    };
-
-                case Direction.Up:
-                    return new BoardLocation()
-                    {
-                        VerticalPosition = currentPosition.VerticalPosition + 1,
-                        HorizontalPosition = currentPosition.HorizontalPosition
-                    };
-
-                case Direction.Right:
-                    return new BoardLocation()
-                    {
-                        VerticalPosition = currentPosition.VerticalPosition,
-                        HorizontalPosition = currentPosition.HorizontalPosition.GetNextChar()
-                    };
-
-                case Direction.Left:
-                    return new BoardLocation()
-                    {
-                        VerticalPosition = currentPosition.VerticalPosition,
-                        HorizontalPosition = currentPosition.HorizontalPosition.GetNextChar(-1)
-                    };
-            }
-
-            return currentPosition;
+                Direction.Down => new BoardLocation()
+                {
+                    VerticalPosition = currentPosition.VerticalPosition - 1,
+                    HorizontalPosition = currentPosition.HorizontalPosition
+                },
+                Direction.Up => new BoardLocation()
+                {
+                    VerticalPosition = currentPosition.VerticalPosition + 1,
+                    HorizontalPosition = currentPosition.HorizontalPosition
+                },
+                Direction.Right => new BoardLocation()
+                {
+                    VerticalPosition = currentPosition.VerticalPosition,
+                    HorizontalPosition = currentPosition.HorizontalPosition.GetNextChar()
+                },
+                Direction.Left => new BoardLocation()
+                {
+                    VerticalPosition = currentPosition.VerticalPosition,
+                    HorizontalPosition = currentPosition.HorizontalPosition.GetNextChar(-1)
+                },
+                Direction.None => currentPosition,
+                _ => currentPosition,
+            };
         }
 
         private bool ValidateMove(BoardLocation currentPosition, Direction moveDirection)
         {
-            // check the sanity of the move
+            // check the sanity of the move (i.e. it doesnt go off the board)
             switch (moveDirection)
             {
                 case Direction.Down:
@@ -164,6 +159,10 @@ namespace Minefield
                     {
                         return true;
                     }
+                    break;
+                case Direction.None:
+                    break;
+                default:
                     break;
             }
 

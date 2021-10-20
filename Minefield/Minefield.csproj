@@ -5,4 +5,16 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <LangVersion>latestmajor</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <LangVersion>latestmajor</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="DryIoc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DrylocImplementation\DrylocImplementation.csproj" />
+  </ItemGroup>
 </Project>
